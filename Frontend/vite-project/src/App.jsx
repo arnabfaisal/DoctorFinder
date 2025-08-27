@@ -11,6 +11,8 @@ import PatientU from './pages/PatientU';
 import DoctorU from './pages/DoctorU';
 import Admin from './pages/Admin';
 import LoginForm from './components/LoginForm';
+import DoctorDetails from './pages/DoctorDetails';
+import ReportDoctor from './pages/ReportDoctor';
 
 function App() {
 
@@ -26,6 +28,8 @@ function App() {
           <Route path="/patient-dashboard" element={<PatientU />} />
           <Route path="/doctor-dashboard" element={<DoctorU />} />
           <Route path="/admin-dashboard" element={<Admin />} />
+          <Route path="/doctor/:doctor_id" element={<DoctorDetails />} />
+          <Route path="/report/:doctor_id" element={<ReportDoctor />} />
         </Routes>
         <Footer />
       </AuthProvider>

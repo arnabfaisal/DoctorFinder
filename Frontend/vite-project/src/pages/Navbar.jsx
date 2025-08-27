@@ -22,6 +22,9 @@ const Navbar = () => {
             {isAuthenticated && user?.account_type === 'doctor' && (
               <Link to="/doctor-dashboard" className="text-gray-700 hover:text-blue-600">Dashboard</Link>
             )}
+            {isAuthenticated && user?.account_type === 'admin' && (
+              <Link to="/admin-dashboard" className="text-gray-700 hover:text-blue-600">Dashboard</Link>
+            )}
           </div>
         </div>
 
