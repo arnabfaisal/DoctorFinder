@@ -13,6 +13,7 @@ import Admin from './pages/Admin';
 import LoginForm from './components/LoginForm';
 import DoctorDetails from './pages/DoctorDetails';
 import ReportDoctor from './pages/ReportDoctor';
+import ChatPage from './pages/Chatpage';
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
           <Route path="/admin-dashboard" element={<Admin />} />
           <Route path="/doctor/:doctor_id" element={<DoctorDetails />} />
           <Route path="/report/:doctor_id" element={<ReportDoctor />} />
+          <Route path="/chat/:doctor_id" element={<ChatPage />} />
         </Routes>
         <Footer />
       </AuthProvider>

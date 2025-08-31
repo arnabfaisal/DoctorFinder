@@ -141,6 +141,12 @@ function DoctorDetails() {
         >
         Report Doctor
         </button>
+        <button
+        onClick={() => navigate(`/chat/${doctor.user_id}`)}
+        className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+        >
+        Chat with Doctor
+        </button>
       </div>
     </div>
   );
