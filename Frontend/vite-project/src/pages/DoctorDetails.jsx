@@ -10,12 +10,23 @@ function DoctorDetails() {
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState('');
   const [commented, setCommented] = useState('');
+  const [slots, setSlots] = useState([]); // All slots for this doctor
+  const [filteredSlots, setFilteredSlots] = useState([]); // Filtered slots
+  const [centres, setCentres] = useState([]); // Available centres for this doctor
   const navigate = useNavigate();
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    minCost: '',
+    maxCost: '',
+    centre_id: '', // Filter by specific centre
+  });
 
   useEffect(() => {
     async function fetchData() {
       if (!tokens) return;
 
+      // Fetch doctor details
       const doctorRes = await fetch(`http://localhost:3000/api/doctor/${doctor_id}`, {
         headers: {
           Authorization: `Bearer ${tokens.accessToken}`,
@@ -24,6 +35,7 @@ function DoctorDetails() {
       const doctorData = await doctorRes.json();
       setDoctor(doctorData.doctors?.[0] || null);
 
+      // Fetch reviews
       const reviewRes = await fetch(`http://localhost:3000/api/review/${doctor_id}`, {
         headers: {
           Authorization: `Bearer ${tokens.accessToken}`,
@@ -31,11 +43,63 @@ function DoctorDetails() {
       });
       const reviewData = await reviewRes.json();
       setReviews(reviewData.reviews || []);
+
+      // Fetch all slots with full details using the new API
+      const slotRes = await fetch(`http://localhost:3000/api/filter/doctor/${doctor_id}/all-slots`, {
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+        },
+      });
+      const slotData = await slotRes.json();
+      console.log("Fetched slots:", slotData);
+      setSlots(slotData || []);
+
+      // Fetch available centres for this doctor
+      const centreRes = await fetch(`http://localhost:3000/api/filter/doctor/${doctor_id}/centres`, {
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+        },
+      });
+      const centreData = await centreRes.json();
+      setCentres(centreData || []);
     }
     fetchData();
   }, [doctor_id, tokens]);
 
+  // Filter slots using the backend API
+  const filterSlots = async () => {
+    try {
+      if (!tokens) return;
+      
+      const query = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(filters).filter(([_, v]) => v !== "")
+        )
+      ).toString();
 
+      const res = await fetch(`http://localhost:3000/api/filter/doctor/${doctor_id}/slots?${query}`, {
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered slots");
+      const data = await res.json();
+      console.log("Filtered slots:", data);
+      setFilteredSlots(data || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to filter slots");
+    }
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setFilters({
+      minCost: '',
+      maxCost: '',
+      centre_id: '',
+    });
+    setFilteredSlots([]);
+  };
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -63,11 +127,33 @@ function DoctorDetails() {
     }
   };
 
+  // Handle slots booking
+  const handleBookSlot = async (booking_id) => {
+    const res = await fetch(`http://localhost:3000/api/slots/book/${booking_id}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+      },
+    });
+
+    if (res.ok) {
+      alert("Slot booked successfully!");
+      // Remove booked slots from both arrays
+      setSlots(slots.filter(s => s.booking_id !== booking_id));
+      setFilteredSlots(filteredSlots.filter(s => s.booking_id !== booking_id));
+    } else {
+      const err = await res.json();
+      alert(err.message || "Failed to book slots");
+    }
+  };
+
   if (!doctor) return <div>Loading...</div>;
+
+  const displayedSlots = filteredSlots.length > 0 ? filteredSlots : slots;
 
   return (
     <div className='min-h-screen my-5'>
-      <div className="mx-auto max-w-2xl p-6 bg-white shadow-md rounded-2xl flex flex-col justify-center border border-blue-600">
+      <div className="mx-auto max-w-4xl p-6 bg-white shadow-md rounded-2xl flex flex-col justify-center border border-blue-600">
 
         <h2 className="text-2xl font-bold mb-2">
           {doctor.first_name} {doctor.last_name}
@@ -78,6 +164,107 @@ function DoctorDetails() {
           Reputation:{" "}
           {doctor.reputation ? doctor.reputation : "No rating yet"}
         </p>
+
+        {/* Slot Filters */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-semibold mb-3">Filter Available Slots</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <input
+              type="number"
+              placeholder="Min Cost ($)"
+              value={filters.minCost}
+              onChange={(e) => setFilters({ ...filters, minCost: e.target.value })}
+              className="border p-2 rounded"
+            />
+            <input
+              type="number"
+              placeholder="Max Cost ($)"
+              value={filters.maxCost}
+              onChange={(e) => setFilters({ ...filters, maxCost: e.target.value })}
+              className="border p-2 rounded"
+            />
+            <select
+              value={filters.centre_id}
+              onChange={(e) => setFilters({ ...filters, centre_id: e.target.value })}
+              className="border p-2 rounded"
+            >
+              <option value="">All Centres</option>
+              {centres.map((centre) => (
+                <option key={centre.centre_id} value={centre.centre_id}>
+                  {centre.centre_name} - {centre.city}
+                  {centre.division && `, ${centre.division}`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={filterSlots}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Apply Filters
+            </button>
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Available slots section */}
+        <h3 className="text-xl font-semibold mt-6 mb-3">
+          Available Slots 
+          {filteredSlots.length > 0 && (
+            <span className="text-sm text-blue-600 ml-2">
+              (Showing {filteredSlots.length} filtered results)
+            </span>
+          )}
+        </h3>
+        {displayedSlots && displayedSlots.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {displayedSlots.map((slot) => (
+              <div
+                key={slot.booking_id}
+                className="border p-4 rounded-lg bg-gray-50"
+              >
+                <div className="mb-3">
+                  <p className="text-sm text-gray-700">
+                    <strong>Time:</strong> {new Date(slot.start_time).toLocaleString()} -{" "}
+                    {new Date(slot.end_time).toLocaleString()}
+                  </p>
+                  <p className="text-sm font-bold text-blue-600">
+                    <strong>Cost:</strong> ${slot.cost}
+                  </p>
+                  {slot.centre_name && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Centre:</strong> {slot.centre_name}
+                    </p>
+                  )}
+                  {slot.city && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Location:</strong> {slot.city}
+                      {slot.division && `, ${slot.division}`}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleBookSlot(slot.booking_id)}
+                  className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Book This Slot
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 italic">
+            {filteredSlots.length === 0 && (filters.minCost || filters.maxCost || filters.centre_id) 
+              ? "No slots match your filter criteria." 
+              : "No available slots right now."}
+          </p>
+        )}
 
         <h3 className="text-xl font-semibold mt-6 mb-3">Reviews</h3>
         {reviews.length ? (
@@ -133,19 +320,17 @@ function DoctorDetails() {
           </button>
         </form>
 
-
-
         <button
-        onClick={() => navigate(`/report/${doctor.user_id}`)}
-        className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          onClick={() => navigate(`/report/${doctor.user_id}`)}
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
         >
-        Report Doctor
+          Report Doctor
         </button>
         <button
-        onClick={() => navigate(`/chat/${doctor.user_id}`)}
-        className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          onClick={() => navigate(`/chat/${doctor.user_id}`)}
+          className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
         >
-        Chat with Doctor
+          Chat with Doctor
         </button>
       </div>
     </div>

@@ -8,69 +8,58 @@ const { authentication, authorize, isValidEmail } = require("../middleware/auth"
 const router = express.Router();
 
 router.post('/register', async (req , res) => {
+  try {
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      account_type,
+      phone_number,
+      date_of_birth,
+      city,
+      division,
+      street,
+      gender,
+      specialization
+    } = req.body; 
 
-    try {
-        const {
-            first_name,
-            last_name,
-            email,
-            password,
-            account_type,
-            phone_number
-        } = req.body; 
-
-        if(!first_name || !last_name || !email || !password || !phone_number) {
-            return res.status(400).json({ message: 'first_name, last_name, email, password, phone_number are required' });
-        }
-
-        if (!isValidEmail(email)) return res.status(400).json({ message: 'Invalid email' });
-
-        const role = ['doctor', 'patient', 'admin'].includes(account_type) ? account_type : 'patient';
-
-        
-        const [exists] = await pool.query('select user_id from app_user where email = ?', [email]);
-
-        if(exists.length) {
-            return res.status(409).json({message: 'email already exists'})
-        }
-
-        const password_hash = await bcrypt.hash(password,10);
-
-        const[result] = await pool.query('insert into app_user (first_name, last_name, email, password_hash, account_type, phone_number) values(?, ?, ?, ?, ?, ?)',[first_name,last_name,email,password_hash,role, phone_number]);
-
-        /*
-        console.log(result) => 
-            ResultSetHeader {
-            fieldCount: 0,
-            affectedRows: 1,
-            insertId: 10,
-            info: '',
-            serverStatus: 2,
-            warningStatus: 0,
-            changedRows: 0
-            }
-        */
-        const user_id = result.insertId;
-
-
-        const accessToken = signAccessToken({user_id,account_type: role});
-
-        const refreshToken = signRefreshToken({user_id, account_type: role});
-
-        await pool.query('UPDATE app_user SET refresh_token = ? WHERE user_id = ?', [refreshToken, user_id]);
-
-        return res.status(201).json({
-        message: 'Registered successfully',
-        accessToken,
-        refreshToken,
-        user: { user_id, first_name, last_name, email, account_type: role },
-        });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Server error' });
+    if (!first_name || !last_name || !email || !password || !phone_number || !date_of_birth || !city || !division || !street || !gender) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
-})
+
+    const role = ['doctor', 'patient', 'admin'].includes(account_type) ? account_type : 'patient';
+
+    const [exists] = await pool.query('SELECT user_id FROM app_user WHERE email = ?', [email]);
+    if (exists.length) return res.status(409).json({ message: 'Email already exists' });
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const [result] = await pool.query(
+      `INSERT INTO app_user 
+       (first_name, last_name, email, password_hash, account_type, phone_number, date_of_birth, city, division, street, gender, specialization) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [first_name, last_name, email, password_hash, role, phone_number, date_of_birth, city, division, street, gender, role === 'doctor' ? specialization : null]
+    );
+
+    const user_id = result.insertId;
+    const accessToken = signAccessToken({ user_id, account_type: role });
+    const refreshToken = signRefreshToken({ user_id, account_type: role });
+
+    await pool.query('UPDATE app_user SET refresh_token = ? WHERE user_id = ?', [refreshToken, user_id]);
+
+    return res.status(201).json({
+      message: 'Registered successfully',
+      accessToken,
+      refreshToken,
+      user: { user_id, first_name, last_name, email, account_type: role }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 router.post('/login', async (req, res) => {
 

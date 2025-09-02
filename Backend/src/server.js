@@ -7,6 +7,10 @@ const reviewRoutes = require("./routes/review.routes")
 const viewdoctors  = require("./routes/viewdoctor")
 const reportRoutes = require('./routes/report.routes');
 const chatRoutes = require('./routes/chat.route');
+const slotRoutes = require("./routes/slots.routes");
+const centreRoutes = require("./routes/viewcentre");
+const filterSpRoutes = require("./routes/filterSp.route");
+const filterRoutes = require("./routes/filter.route");
 
 const http = require('http');
 const WebSocket = require('ws');
@@ -21,6 +25,10 @@ app.use('/api/review', reviewRoutes);
 app.use('/api/doctor', viewdoctors);
 app.use('/api/report', reportRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/slots', slotRoutes);
+app.use('/api/centre', centreRoutes);
+app.use('/api/filterSp', filterSpRoutes);
+app.use('/api/filter', filterRoutes);
 
 
 const PORT = process.env.PORT;
@@ -34,8 +42,7 @@ let clients = {};
 
 wss.on('connection', (ws, req) => {
   console.log("new client connected to chat!!!")
-  console.log(`ws : ${ws}`)
-  console.log(`req : ${req}`)
+
 
   ws.on("message", async (msg) => {
 
