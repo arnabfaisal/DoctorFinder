@@ -55,7 +55,7 @@ function DoctorDetails() {
       setSlots(slotData || []);
 
       // Fetch available centres for this doctor
-      const centreRes = await fetch(`http://localhost:3000/api/filter/doctor/${doctor_id}/centres`, {
+      const centreRes = await fetch(`http://localhost:3000/api/filterSp/doctor/${doctor_id}/centres`, {
         headers: {
           Authorization: `Bearer ${tokens.accessToken}`,
         },
@@ -149,7 +149,7 @@ function DoctorDetails() {
 
   if (!doctor) return <div>Loading...</div>;
 
-  const displayedSlots = filteredSlots.length > 0 ? filteredSlots : slots;
+  const displayedSlots = filteredSlots.length > 0 ? filteredSlots : slots; // most important part of the search filter . if there is filtered sets, it retunrns just the set
 
   return (
     <div className='min-h-screen my-5'>

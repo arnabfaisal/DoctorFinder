@@ -36,9 +36,9 @@ const PORT = process.env.PORT;
 
 const server = http.createServer(app);
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server }); //allows backend and websocket server port to be the same
 
-let clients = {};
+let clients = {}; // ke ke join korse
 
 wss.on('connection', (ws, req) => {
   console.log("new client connected to chat!!!")
@@ -49,7 +49,7 @@ wss.on('connection', (ws, req) => {
 
     try {
 
-      const data = JSON.parse(msg);
+      const data = JSON.parse(msg); // json to javascript object 
 
       if (data.type === 'auth') {
         clients[data.user_id] = ws; 

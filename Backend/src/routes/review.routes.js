@@ -65,8 +65,6 @@ router.get('/:doctor_id', async (req, res) => {
       return res.status(404).json({ message: 'Doctor not found' });
       }
 
-
-
     const [reviews] = await pool.query(
       'select r.reviewer_id, r.rating, r.commented, r.created_at, r.updated_at, u.first_name as reviewer_first, u.last_name as reviewer_last from Review r join app_user u on r.reviewer_id = u.user_id where r.doctor_id = ? order by r.created_at desc', [doctor_id]
     );
@@ -84,6 +82,5 @@ router.get('/:doctor_id', async (req, res) => {
     return res.status(500).json({ message: 'bad happened at reviews GET' });
   }
 });
-
 
 module.exports = router;

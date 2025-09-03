@@ -34,11 +34,12 @@ function DoctorU() {
   const fetchChats = async () => {
     if (!tokens) return;
     try {
-      const res = await fetch("http://localhost:3000/api/chat/my-chats", {
+      const res = await fetch("http://localhost:3000/api/chat/my-chats", { // last message from the patient
         headers: { Authorization: `Bearer ${tokens.accessToken}` },
       });
       const data = await res.json();
       setChats(data);
+      console.log(chats);
     } catch (err) {
       console.error("Failed to fetch chats", err);
     }

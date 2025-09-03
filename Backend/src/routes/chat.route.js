@@ -10,6 +10,8 @@ const router = express.Router();
 
 //POST create chat between dcotor and patient
 
+
+// api/chat/
 router.post('/create', authentication, async (req, res) => {
   try {
 
@@ -95,45 +97,45 @@ router.get('/my-chats', authentication, async (req , res) => {
 
 
 
-//POST sending messager
+// //POST sending messager
 
-router.post("/send", authentication, async (req, res) => {
+// router.post("/send", authentication, async (req, res) => {
 
-  try {
-    const { chat_id, content } = req.body;
-    const {user_id, account_type } = req.user;
+//   try {
+//     const { chat_id, content } = req.body;
+//     const {user_id, account_type } = req.user;
 
-    if (!chat_id || !content) {
-      return res.status(400).json({ message: 'chat_id and content are required' });
-    }
+//     if (!chat_id || !content) {
+//       return res.status(400).json({ message: 'chat_id and content are required' });
+//     }
 
-    const [result] = await pool.query(
-      "INSERT INTO msg (sender_id, sender_role, content, created_at, updated_at, chat_id) VALUES (?, ?, ?, NOW(), NOW(), ?)",
-      [user_id, account_type, content, chat_id]
-    );
+//     const [result] = await pool.query(
+//       "INSERT INTO msg (sender_id, sender_role, content, created_at, updated_at, chat_id) VALUES (?, ?, ?, NOW(), NOW(), ?)",
+//       [user_id, account_type, content, chat_id]
+//     );
 
 
-    await pool.query(
-      "UPDATE chat SET last_message=?, updated_at=NOW() WHERE chat_id=?",
-      [content, chat_id]
-    );
+//     await pool.query(
+//       "UPDATE chat SET last_message=?, updated_at=NOW() WHERE chat_id=?",
+//       [content, chat_id]
+//     );
 
-    return res.status(201).json({ message: "Message sent", msg_id: result.insertId });
+//     return res.status(201).json({ message: "Message sent", msg_id: result.insertId });
 
 
 
     
-  } catch (error) {
-      console.log(error);
-      console.log("something happend bad at /sending")
-      return res.status(500).json({ message: "Server error /send has a propblelm" });
-  }
+//   } catch (error) {
+//       console.log(error);
+//       console.log("something happend bad at /sending")
+//       return res.status(500).json({ message: "Server error /send has a propblelm" });
+//   }
 
-})
+// })
 
 
 
-// GET all message 
+// GET all message from a doctor and patient
 
 router.get('/:chat_id/messages', authentication, async (req, res) => {
 
