@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const CHAT_POLL_INTERVAL = 10000;
+const CHAT_POLL_INTERVAL = 1000;
 
 function DoctorU() {
   const { tokens, user } = useAuth();
@@ -102,6 +102,8 @@ function DoctorU() {
         setEndTime("");
         setCost("");
         fetchSlots();
+        alert(data.message || "Succesfully created slot");
+
       } else {
         alert(data.message || "Failed to create slot");
       }
@@ -215,111 +217,69 @@ function DoctorU() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <div className="w-1/5 border-r p-3 bg-gray-50 text-sm overflow-y-auto">
-        <h2 className="font-semibold mb-3">Patients</h2>
-        <div className="space-y-2">
+!tokens ? (<div>not authorized </div>): (<div className="min-h-screen bg-gray-100 p-4">
+  <div className="grid grid-cols-12 gap-4">
+
+    {/* LEFT: Conversations + Booked Slots */}
+    <div className="col-span-12 md:col-span-3 space-y-4">
+      {/* Conversations (select chat) */}
+      <div className="bg-white border rounded-lg shadow-sm p-4 flex flex-col">
+        <h2 className="font-semibold text-gray-700 mb-3">Conversations</h2>
+        <div className="space-y-2 overflow-y-auto max-h-[40vh]">
           {chats.map((chat) => (
             <div
               key={chat.chat_id}
-              className={`p-2 cursor-pointer rounded ${
+              className={`p-3 cursor-pointer rounded-lg transition ${
                 selectedChat?.chat_id === chat.chat_id
-                  ? "bg-blue-100"
-                  : "bg-white"
+                  ? "bg-blue-100 border border-blue-300"
+                  : "bg-gray-50 hover:bg-gray-100"
               }`}
               onClick={() => selectChat(chat)}
             >
-              <p className="text-xs font-medium">Patient {chat.patient_id}</p>
-              <p className="text-[11px] text-gray-500 truncate">
+              <p className="text-sm font-medium">
+                {chat.patient_first_name} {chat.patient_last_name}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
                 {chat.last_message || "No messages yet"}
               </p>
             </div>
           ))}
         </div>
-
-        {/* Slots */}
-        <div className="mt-6">
-          <h2 className="font-semibold mb-2">My Slots</h2>
-          <form onSubmit={handleCreateSlot} className="space-y-2">
-            <select
-              value={centreId}
-              onChange={(e) => setCentreId(e.target.value)}
-              className="w-full border rounded p-1 text-xs"
-              required
-            >
-              <option value="">Select Centre</option>
-              {centres.map((c) => (
-                <option key={c.centre_id} value={c.centre_id}>
-                  {c.Name}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="datetime-local"
-              className="w-full border rounded p-1 text-xs"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              required
-            />
-
-            <input
-              type="datetime-local"
-              className="w-full border rounded p-1 text-xs"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              required
-            />
-
-            <input
-              type="number"
-              placeholder="Cost"
-              className="w-full border rounded p-1 text-xs"
-              value={cost}
-              onChange={(e) => setCost(e.target.value)}
-              required
-            />
-
-            <button
-              type="submit"
-              className="w-full px-2 py-1 bg-green-500 text-white text-xs rounded"
-            >
-              Create Slot
-            </button>
-          </form>
-
-          <ul className="mt-3 space-y-1 text-xs">
-            {slots.map((slot, idx) => (
-              <li key={idx} className="p-1 border rounded bg-white">
-                Booking ID {slot.booking_id} <br />
-                Centre {slot.centre_name} <br/>
-                Start {slot.start_time.slice(0, 16)} <br/>
-                End {slot.end_time.slice(0, 16)} <br />
-                Name {slot.patient_first_name} <br/>
-                Email {slot.patient_email} <br/>
-                Cost: ${slot.cost}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
 
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col p-3 text-sm">
+      {/* Booked Slots */}
+      <div className="bg-white border rounded-lg shadow-sm p-4 flex flex-col">
+        <h2 className="font-semibold text-gray-700 mb-3">Booked Slots</h2>
+        <ul className="space-y-2 text-xs overflow-y-auto max-h-[40vh]">
+          {slots.map((slot, idx) => (
+            <li key={idx} className="p-2 border rounded bg-gray-50">
+              <p><span className="font-medium">Booking ID:</span> {slot.booking_id}</p>
+              <p><span className="font-medium">Centre:</span> {slot.centre_name}</p>
+              <p><span className="font-medium">Start:</span> {slot.start_time.slice(0, 16)}</p>
+              <p><span className="font-medium">End:</span> {slot.end_time.slice(0, 16)}</p>
+              <p><span className="font-medium">Patient:</span> {slot.patient_first_name}</p>
+              <p><span className="font-medium">Email:</span> {slot.patient_email}</p>
+              <p><span className="font-medium">Cost:</span> ${slot.cost}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    {/* MIDDLE: Chat Window (UNCHANGED) */}
+    <div className="col-span-12 md:col-span-6">
+      <div className="flex-1 flex flex-col p-3 text-sm bg-transparent">
         {selectedChat ? (
           <>
             <h2 className="font-semibold text-base mb-2">
-              Chat with Patient {selectedChat.patient_id}
+              Chat with {selectedChat.patient_first_name}
             </h2>
             <div className="flex-1 border rounded p-3 overflow-y-auto bg-white">
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`mb-2 flex ${
-                    msg.sender_id === user.user_id
-                      ? "justify-end"
-                      : "justify-start"
+                    msg.sender_id === user.user_id ? "justify-end" : "justify-start"
                   }`}
                 >
                   <p
@@ -356,6 +316,63 @@ function DoctorU() {
         )}
       </div>
     </div>
+
+    {/* RIGHT: Create Slot */}
+    <div className="col-span-12 md:col-span-3 bg-white border rounded-lg shadow-sm p-4 flex flex-col">
+      <h2 className="font-semibold text-gray-700 mb-3">Create Slot</h2>
+      <form onSubmit={handleCreateSlot} className="space-y-3 text-xs">
+        <select
+          value={centreId}
+          onChange={(e) => setCentreId(e.target.value)}
+          className="w-full border rounded p-2"
+          required
+        >
+          <option value="">Select Centre</option>
+          {centres.map((c) => (
+            <option key={c.centre_id} value={c.centre_id}>
+              {c.Name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="datetime-local"
+          className="w-full border rounded p-2"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+          required
+        />
+
+        <input
+          type="datetime-local"
+          className="w-full border rounded p-2"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+          required
+        />
+
+        <input
+          type="number"
+          placeholder="Cost"
+          className="w-full border rounded p-2"
+          value={cost}
+          onChange={(e) => setCost(e.target.value)}
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+        >
+          Create Slot
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>)
+
+
   );
 }
 

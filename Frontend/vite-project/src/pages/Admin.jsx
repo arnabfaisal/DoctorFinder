@@ -52,9 +52,11 @@ function Admin() {
     }
   };
 
+  if(!tokens) return <div>not authorized</div>
   if (loading) return <div>Loading...</div>;
 
   return (
+    !tokens ?(<div>not authorized</div>) : (
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="container mx-auto">
         <h1 className="text-3xl font-bold mb-6">Admin Dashboard - Reports</h1>
@@ -99,7 +101,7 @@ function Admin() {
         )}
         </div>
 
-    </div>
+    </div>)
   );
 }
 

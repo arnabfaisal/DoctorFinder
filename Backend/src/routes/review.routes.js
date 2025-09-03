@@ -52,7 +52,7 @@ router.post('/', authentication, async (req, res) => {
   }
 })
 
-
+// shob review doctor er
 router.get('/:doctor_id', async (req, res) => {
   try{
     const { doctor_id } = req.params; 

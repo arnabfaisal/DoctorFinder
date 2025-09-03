@@ -90,6 +90,7 @@ function ChatPage() {
   };
 
   // ✅ Conditional rendering here, after hooks
+  if (!tokens || !user) return <div>not authorized</div>;
   if (!tokens || !user) return <div>Loading...</div>;
 
   return (

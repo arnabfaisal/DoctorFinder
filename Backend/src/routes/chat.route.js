@@ -60,79 +60,47 @@ router.post('/create', authentication, async (req, res) => {
 
 
 
-router.get('/my-chats', authentication, async (req , res) => {
+router.get('/my-chats', authentication, async (req, res) => {
   try {
+    const { user_id, account_type } = req.user;
 
-    const { user_id, account_type} = req.user;
-    
     let query;
+    let params = [user_id];
 
-    if(account_type === "doctor") {
-      query = 'select * from chat where doctor_id = ?';
-    } else if(account_type === "patient") {
-      query = 'select * from chat where patient_id = ?';
-    } else{
+    if (account_type === "doctor") {
+      query = `
+        SELECT c.chat_id, c.doctor_id, c.patient_id, c.last_message, c.created_at, c.updated_at,
+            d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
+            p.first_name AS patient_first_name, p.last_name AS patient_last_name
+            FROM chat c
+            JOIN app_user d ON c.doctor_id = d.user_id
+            JOIN app_user p ON c.patient_id = p.user_id
+            WHERE c.doctor_id = ?
+      `;
+    } else if (account_type === "patient") {
+      query = `
+        SELECT c.chat_id, c.doctor_id, c.patient_id, c.last_message, c.created_at, c.updated_at,
+            d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
+            p.first_name AS patient_first_name, p.last_name AS patient_last_name
+            FROM chat c
+            JOIN app_user d ON c.doctor_id = d.user_id
+            JOIN app_user p ON c.patient_id = p.user_id
+            WHERE c.patient_id = ?
+      `;
+    } else {
       return res.status(403).json({ message: "Only doctors or patients can have chats" });
     }
 
-
-
-    const [rows] = await pool.query(
-      query, [user_id]
-    )
+    const [rows] = await pool.query(query, params);
 
     return res.json(rows);
-    
 
   } catch (error) {
     console.log(error);
-    console.log("something happend bad at /my-chats")
+    console.log("❌ Something went wrong at /my-chats");
     return res.status(500).json({ message: "Server error /my-chats has a problem" });
-    
   }
-
-})
-
-
-
-
-
-// //POST sending messager
-
-// router.post("/send", authentication, async (req, res) => {
-
-//   try {
-//     const { chat_id, content } = req.body;
-//     const {user_id, account_type } = req.user;
-
-//     if (!chat_id || !content) {
-//       return res.status(400).json({ message: 'chat_id and content are required' });
-//     }
-
-//     const [result] = await pool.query(
-//       "INSERT INTO msg (sender_id, sender_role, content, created_at, updated_at, chat_id) VALUES (?, ?, ?, NOW(), NOW(), ?)",
-//       [user_id, account_type, content, chat_id]
-//     );
-
-
-//     await pool.query(
-//       "UPDATE chat SET last_message=?, updated_at=NOW() WHERE chat_id=?",
-//       [content, chat_id]
-//     );
-
-//     return res.status(201).json({ message: "Message sent", msg_id: result.insertId });
-
-
-
-    
-//   } catch (error) {
-//       console.log(error);
-//       console.log("something happend bad at /sending")
-//       return res.status(500).json({ message: "Server error /send has a propblelm" });
-//   }
-
-// })
-
+});
 
 
 // GET all message from a doctor and patient

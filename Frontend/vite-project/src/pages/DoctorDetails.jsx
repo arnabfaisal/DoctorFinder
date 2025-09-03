@@ -146,7 +146,7 @@ function DoctorDetails() {
       alert(err.message || "Failed to book slots");
     }
   };
-
+  if (!tokens) return <div>not authorized</div>
   if (!doctor) return <div>Loading...</div>;
 
   const displayedSlots = filteredSlots.length > 0 ? filteredSlots : slots; // most important part of the search filter . if there is filtered sets, it retunrns just the set
